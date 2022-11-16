@@ -39,12 +39,16 @@ def create_species_table(cur, conn):
 # TASK 1
 # CREATE TABLE FOR PATIENTS IN DATABASE
 def create_patients_table(cur, conn):
-    pass
+    cur.execute("DROP TABLE IF EXISTS Patients")
+    cur.execute("CREATE TABLE Patients (pet_id INTEGER PRIMARY KEY, name TEXT, species_id INTEGER, age INTEGER, cuteness INTEGER, agressiveness INTEGER)")
+    conn.commit()
+    
 
 
 # ADD FLUFFLE TO THE TABLE
 def add_fluffle(cur, conn):
-    pass
+    cur.execute("INSERT INTO Patients (pet_id, name, species_id, age, cuteness, agressiveness) VALUES (?, ?, ?, ?, ?, ?) ", (0, 'Fluffle', 0, 3, 90, 100))
+    conn.commit()
     
 
 # TASK 2
@@ -57,15 +61,35 @@ def add_pets_from_json(filename, cur, conn):
     file_data = f.read()
     f.close()
     json_data = json.loads(file_data)
+    
+    pet_id = 1
 
     # THE REST IS UP TO YOU
-    pass
+    for pet in json_data:
+        name = pet['name']
+        age = pet['age']
+        species = pet['species']
+        cuteness = pet['cuteness']
+        aggressiveness = pet['aggressiveness']
+        #why do you use the question mark
+        cur.execute('SELECT id FROM Species WHERE title = ?', (species,))
+        species_id = cur.fetchone()[0] #use 0 because it is a tuple
+        
+        cur.execute("INSERT INTO Patients (pet_id, name, species_id, age, cuteness, agressiveness) VALUES (?, ?, ?, ?, ?, ?) ", (pet_id, name, species_id, age, cuteness, aggressiveness))
+        pet_id += 1
+    
+    conn.commit()
+
 
 
 # TASK 3
 # CODE TO OUTPUT NON-AGGRESSIVE PETS
 def non_aggressive_pets(aggressiveness, cur, conn):
-    pass
+    cur.execute('SELECT name FROM Patients WHERE agressiveness <= ?', (aggressiveness,))
+    non_aggressive_pets_list = cur.fetchall() #we use fetc all to get all rows of the select result
+
+    non_aggressive_pets_list = [item[0] for item in non_aggressive_pets_list]
+    return non_aggressive_pets_list
 
 
 
@@ -73,7 +97,6 @@ def main():
     # SETUP DATABASE AND TABLE
     cur, conn = setUpDatabase('animal_hospital.db')
     create_species_table(cur, conn)
-
     create_patients_table(cur, conn)
     add_fluffle(cur, conn)
     add_pets_from_json('pets.json', cur, conn)
